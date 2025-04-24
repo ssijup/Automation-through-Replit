@@ -1,12 +1,10 @@
-from rest_framework import generics, permissions, status
-from rest_framework.response import Response
-from django.db.models import Q
+from rest_framework import generics, permissions
 from .models import User, Warehouse, Announcement
 from .serializers import (
     UserSerializer,
     UserUpdateSerializer,
     WarehouseSerializer,
-    AnnouncementSerializer,
+    AnnouncementSerializer
 )
 from .permissions import IsPlatformAdmin, IsAdminUser, IsOwnerOrAdmin
 
@@ -17,7 +15,7 @@ class CurrentUserView(generics.RetrieveAPIView):
     """
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
-
+    
     def get_object(self):
         return self.request.user
 
@@ -59,9 +57,9 @@ class WarehouseListCreateView(generics.ListCreateAPIView):
     """
     serializer_class = WarehouseSerializer
     permission_classes = [IsAdminUser]
-
+    
     def get_queryset(self):
-        return Warehouse.objects.all()
+        return Warehouse.objects.all().order_by('-created_at')
 
 
 class WarehouseDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -79,9 +77,9 @@ class AnnouncementListCreateView(generics.ListCreateAPIView):
     """
     serializer_class = AnnouncementSerializer
     permission_classes = [IsAdminUser]
-
+    
     def get_queryset(self):
-        return Announcement.objects.all()
+        return Announcement.objects.all().order_by('-created_at')
 
 
 class AnnouncementDetailView(generics.RetrieveUpdateDestroyAPIView):
