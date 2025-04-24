@@ -8,14 +8,37 @@ mkdir -p staticfiles
 mkdir -p media
 mkdir -p templates
 
-# Copy the static login page to dist directory
-cp frontend/dist/index.html templates/index.html
+# Install required npm dependencies
+echo "Installing npm dependencies..."
+npm install
 
-# Build the React application
-cd frontend && npx webpack --mode production
+# Create a simple script to run webpack build
+cat > webpack_build.js << 'EOL'
+const webpack = require('webpack');
+const config = require('./frontend/webpack.config.js');
 
-echo "Collecting static files..."
-cd ..
-cd backend && python manage.py collectstatic --noinput
+webpack(config, (err, stats) => {
+  if (err || stats.hasErrors()) {
+    console.error('Build failed:', err || stats.toString({
+      chunks: false,
+      colors: true
+    }));
+    process.exit(1);
+  }
+  console.log(stats.toString({
+    chunks: false,
+    colors: true
+  }));
+  console.log('Build completed successfully!');
+});
+EOL
+
+# Run the webpack build
+echo "Running webpack build..."
+node webpack_build.js
+
+# Copy the built files to the templates directory
+echo "Copying built files..."
+cp -R frontend/dist/* templates/
 
 echo "Frontend build complete!"
