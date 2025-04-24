@@ -1,0 +1,83 @@
+/* Main styles for the application */
+
+body {
+  margin: 0;
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f5f5f5;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.container {
+  display: flex;
+  flex: 1;
+}
+
+.content {
+  flex: 1;
+  margin-left: 240px; /* Match drawer width */
+  min-height: calc(100vh - 64px); /* Adjust for header height */
+}
+
+/* Form styles */
+.form-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Table styles */
+.table-actions {
+  white-space: nowrap;
+}
+
+/* Dashboard card styles */
+.dashboard-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-card-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.dashboard-card-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Animation for loading states */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.pulse {
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 960px) {
+  .content {
+    margin-left: 0;
+    padding: 16px;
+  }
+}

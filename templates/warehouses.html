@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block header_title %}Warehouses{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">All Warehouses</h5>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWarehouseModal">
+            <i class="bi bi-plus-circle"></i> Add Warehouse
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>City</th>
+                        <th>Latitude</th>
+                        <th>Longitude</th>
+                        <th>Created By</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for warehouse in warehouses %}
+                    <tr>
+                        <td>{{ warehouse.id }}</td>
+                        <td>{{ warehouse.city }}</td>
+                        <td>{{ warehouse.latitude }}</td>
+                        <td>{{ warehouse.longitude }}</td>
+                        <td>{{ warehouse.created_by.username if warehouse.created_by else 'N/A' }}</td>
+                        <td>{{ warehouse.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td class="table-actions">
+                            <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editWarehouseModal{{ warehouse.id }}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteWarehouseModal{{ warehouse.id }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if not warehouses %}
+        <div class="text-center py-3">
+            <p class="text-muted">No warehouses found.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Warehouse Modal -->
+<div class="modal fade" id="addWarehouseModal" tabindex="-1" aria-labelledby="addWarehouseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('create_warehouse') }}" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addWarehouseModalLabel">Add New Warehouse</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="city" class="form-label">City</label>
+                        <input type="text" class="form-control" id="city" name="city" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="latitude" class="form-label">Latitude</label>
+                        <input type="number" step="any" class="form-control" id="latitude" name="latitude" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="longitude" class="form-label">Longitude</label>
+                        <input type="number" step="any" class="form-control" id="longitude" name="longitude" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Warehouse</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit & Delete Modals (dynamically generated for each warehouse) -->
+{% for warehouse in warehouses %}
+<!-- Edit Warehouse Modal -->
+<div class="modal fade" id="editWarehouseModal{{ warehouse.id }}" tabindex="-1" aria-labelledby="editWarehouseModalLabel{{ warehouse.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('update_warehouse', warehouse_id=warehouse.id) }}" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editWarehouseModalLabel{{ warehouse.id }}">Edit Warehouse</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="city{{ warehouse.id }}" class="form-label">City</label>
+                        <input type="text" class="form-control" id="city{{ warehouse.id }}" name="city" value="{{ warehouse.city }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="latitude{{ warehouse.id }}" class="form-label">Latitude</label>
+                        <input type="number" step="any" class="form-control" id="latitude{{ warehouse.id }}" name="latitude" value="{{ warehouse.latitude }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="longitude{{ warehouse.id }}" class="form-label">Longitude</label>
+                        <input type="number" step="any" class="form-control" id="longitude{{ warehouse.id }}" name="longitude" value="{{ warehouse.longitude }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Warehouse</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Warehouse Modal -->
+<div class="modal fade" id="deleteWarehouseModal{{ warehouse.id }}" tabindex="-1" aria-labelledby="deleteWarehouseModalLabel{{ warehouse.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('delete_warehouse', warehouse_id=warehouse.id) }}" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteWarehouseModalLabel{{ warehouse.id }}">Delete Warehouse</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the warehouse in <strong>{{ warehouse.city }}</strong>?</p>
+                    <p class="text-danger">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Delete Warehouse</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
