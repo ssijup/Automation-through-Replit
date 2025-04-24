@@ -1,11 +1,10 @@
-import { createStore, applyMiddleware } from 'redux';
-import thunk from 'redux-thunk';
+import { configureStore } from '@reduxjs/toolkit';
 import rootReducer from './reducers';
 
 // Create store with thunk middleware for async actions
-const store = createStore(
-  rootReducer,
-  applyMiddleware(thunk)
-);
+const store = configureStore({
+  reducer: rootReducer,
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware()
+});
 
 export default store;
