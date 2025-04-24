@@ -108,6 +108,16 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR.parent, 'frontend', 'dist'),
 ]
 
+# Media files
+MEDIA_URL = "media/"
+MEDIA_ROOT = os.path.join(BASE_DIR.parent, 'media')
+
+# Template directories
+TEMPLATES[0]['DIRS'] = [
+    os.path.join(BASE_DIR.parent, 'frontend', 'dist'),
+    os.path.join(BASE_DIR.parent, 'templates'),
+]
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

@@ -68,7 +68,7 @@ export const deleteUser = async (id) => {
 };
 
 export const getUsersCount = async () => {
-  const response = await api.get('/users/');
+  const response = await api.get('/users/count/');
   return response.data.count || 0;
 };
 
@@ -99,7 +99,7 @@ export const deleteWarehouse = async (id) => {
 };
 
 export const getWarehousesCount = async () => {
-  const response = await api.get('/warehouses/');
+  const response = await api.get('/warehouses/count/');
   return response.data.count || 0;
 };
 
@@ -110,7 +110,7 @@ export const getAnnouncements = async (page = 1, page_size = 10) => {
 };
 
 export const getRecentAnnouncements = async (limit = 5) => {
-  const response = await api.get(`/announcements/?page=1&page_size=${limit}`);
+  const response = await api.get(`/announcements/recent/?limit=${limit}`);
   return response.data;
 };
 
@@ -134,7 +134,7 @@ export const deleteAnnouncement = async (id) => {
   return response.data;
 };
 
-export const toggleAnnouncementStatus = async (id, isActive) => {
-  const response = await api.patch(`/announcements/${id}/`, { is_active: isActive });
+export const toggleAnnouncementStatus = async (id) => {
+  const response = await api.patch(`/announcements/${id}/toggle-status/`);
   return response.data;
 };

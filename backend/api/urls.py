@@ -1,17 +1,21 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
 from .views import (
     CurrentUserView,
-    UserListCreateView,
-    UserDetailView,
-    WarehouseListCreateView,
-    WarehouseDetailView,
-    AnnouncementListCreateView,
-    AnnouncementDetailView
+    UserViewSet,
+    WarehouseViewSet,
+    AnnouncementViewSet
 )
+
+# Create a router and register our viewsets with it.
+router = DefaultRouter()
+router.register(r'users', UserViewSet)
+router.register(r'warehouses', WarehouseViewSet)
+router.register(r'announcements', AnnouncementViewSet)
 
 urlpatterns = [
     # Authentication endpoints
@@ -20,14 +24,13 @@ urlpatterns = [
     
     # User endpoints
     path('current-user/', CurrentUserView.as_view(), name='current_user'),
-    path('users/', UserListCreateView.as_view(), name='user_list_create'),
-    path('users/<int:pk>/', UserDetailView.as_view(), name='user_detail'),
     
-    # Warehouse endpoints
-    path('warehouses/', WarehouseListCreateView.as_view(), name='warehouse_list_create'),
-    path('warehouses/<int:pk>/', WarehouseDetailView.as_view(), name='warehouse_detail'),
+    # Include ViewSet routed endpoints
+    path('', include(router.urls)),
     
-    # Announcement endpoints
-    path('announcements/', AnnouncementListCreateView.as_view(), name='announcement_list_create'),
-    path('announcements/<int:pk>/', AnnouncementDetailView.as_view(), name='announcement_detail'),
+    # Custom action URLs (these are just examples, as router already handles these)
+    path('warehouses/count/', WarehouseViewSet.as_view({'get': 'count'}), name='warehouse_count'),
+    path('users/count/', UserViewSet.as_view({'get': 'count'}), name='user_count'),
+    path('announcements/recent/', AnnouncementViewSet.as_view({'get': 'recent'}), name='recent_announcements'),
+    path('announcements/<int:pk>/toggle-status/', AnnouncementViewSet.as_view({'patch': 'toggle_status'}), name='toggle_announcement_status'),
 ]
