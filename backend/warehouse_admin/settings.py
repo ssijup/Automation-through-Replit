@@ -60,15 +60,22 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "warehouse_admin.wsgi.application"
 
-# Database
+# # Database
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.environ.get("PGDATABASE"),
+#         "USER": os.environ.get("PGUSER"),
+#         "PASSWORD": os.environ.get("PGPASSWORD"),
+#         "HOST": os.environ.get("PGHOST"),
+#         "PORT": os.environ.get("PGPORT"),
+#     }
+# }
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("PGDATABASE"),
-        "USER": os.environ.get("PGUSER"),
-        "PASSWORD": os.environ.get("PGPASSWORD"),
-        "HOST": os.environ.get("PGHOST"),
-        "PORT": os.environ.get("PGPORT"),
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -107,7 +114,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Custom user model
 AUTH_USER_MODEL = "api.User"
 
-# REST Framework settings
+# REST Framework settings- from local settings
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
