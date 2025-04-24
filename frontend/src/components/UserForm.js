@@ -1,199 +1,215 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Box, 
-  Paper, 
-  Typography, 
-  TextField, 
-  Button, 
+import { useSelector } from 'react-redux';
+import {
+  Box,
+  Typography,
+  Paper,
+  TextField,
+  Button,
   Grid,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Alert,
+  FormHelperText,
   CircularProgress,
-  Divider
+  Alert
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import SaveIcon from '@mui/icons-material/Save';
 import { getUser, createUser, updateUser } from '../utils/api';
-import { useSelector } from 'react-redux';
+import { hasRole } from '../utils/auth';
 
 const UserForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user: currentUser } = useSelector(state => state.auth);
   const isEditMode = Boolean(id);
+  const { user: currentUser } = useSelector(state => state.auth);
+  
+  // Check if current user is platform admin
+  const isPlatformAdmin = currentUser && hasRole(currentUser, 'PLATFORM_ADMIN');
   
   const [formData, setFormData] = useState({
     username: '',
     email: '',
+    password: '',
+    password2: '',
     first_name: '',
     last_name: '',
-    role: 'WAREHOUSE_ADMIN',
-    password: '',
-    password2: ''
+    role: 'WAREHOUSE_ADMIN'
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
-
-  // Check if user is platform admin
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  
   useEffect(() => {
-    if (currentUser && currentUser.role !== 'PLATFORM_ADMIN') {
+    // Only platform admins can access this page
+    if (!isPlatformAdmin) {
       navigate('/dashboard');
+      return;
     }
-  }, [currentUser, navigate]);
-
-  // Fetch user data if in edit mode
-  useEffect(() => {
+    
     const fetchUser = async () => {
       if (!isEditMode) return;
       
+      setLoading(true);
       try {
-        setLoading(true);
         const data = await getUser(id);
         setFormData({
           username: data.username,
           email: data.email,
+          password: '',
+          password2: '',
           first_name: data.first_name,
           last_name: data.last_name,
-          role: data.role,
-          password: '',
-          password2: ''
+          role: data.role
         });
-      } catch (err) {
-        setError('Failed to load user data. Please try again.');
-        console.error('Error fetching user:', err);
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        setError('Failed to load user data');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchUser();
-  }, [id, isEditMode]);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-  };
-
-  const validateForm = () => {
-    const errors = {};
     
+    fetchUser();
+  }, [id, isEditMode, navigate, isPlatformAdmin]);
+  
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  const validateForm = () => {
     if (!formData.username.trim()) {
-      errors.username = 'Username is required';
+      setError('Username is required');
+      return false;
     }
     
     if (!formData.email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Email is invalid';
-    }
-    
-    if (!formData.first_name.trim()) {
-      errors.first_name = 'First name is required';
-    }
-    
-    if (!formData.last_name.trim()) {
-      errors.last_name = 'Last name is required';
+      setError('Email is required');
+      return false;
     }
     
     if (!isEditMode) {
       if (!formData.password) {
-        errors.password = 'Password is required';
-      } else if (formData.password.length < 8) {
-        errors.password = 'Password must be at least 8 characters';
+        setError('Password is required');
+        return false;
       }
       
       if (formData.password !== formData.password2) {
-        errors.password2 = 'Passwords do not match';
+        setError('Passwords do not match');
+        return false;
       }
-    } else if (formData.password && formData.password !== formData.password2) {
-      errors.password2 = 'Passwords do not match';
     }
     
-    return errors;
+    if (!formData.first_name.trim()) {
+      setError('First name is required');
+      return false;
+    }
+    
+    if (!formData.last_name.trim()) {
+      setError('Last name is required');
+      return false;
+    }
+    
+    return true;
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      setError('Please fix the form errors and try again.');
-      console.error('Validation errors:', validationErrors);
-      return;
-    }
+    if (!validateForm()) return;
     
-    setLoading(true);
-    setError(null);
-    setSuccess(false);
+    setSubmitting(true);
+    setError('');
+    setSuccess('');
     
     try {
+      // Prepare data for submission
       const userData = {
-        username: formData.username,
-        email: formData.email,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        role: formData.role,
+        username: formData.username.trim(),
+        email: formData.email.trim(),
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+        role: formData.role
       };
       
-      if (!isEditMode || (isEditMode && formData.password)) {
+      if (!isEditMode) {
         userData.password = formData.password;
         userData.password2 = formData.password2;
       }
       
       if (isEditMode) {
         await updateUser(id, userData);
+        setSuccess('User updated successfully');
       } else {
         await createUser(userData);
+        setSuccess('User created successfully');
+        
+        // Reset form after successful create
+        if (!isEditMode) {
+          setFormData({
+            username: '',
+            email: '',
+            password: '',
+            password2: '',
+            first_name: '',
+            last_name: '',
+            role: 'WAREHOUSE_ADMIN'
+          });
+        }
       }
       
-      setSuccess(true);
+      // Navigate back to the users list after a short delay
       setTimeout(() => {
         navigate('/users');
       }, 1500);
-    } catch (err) {
-      setError(`Failed to ${isEditMode ? 'update' : 'create'} user. ${err.response?.data?.detail || 'Please try again.'}`);
-      console.error(`Error ${isEditMode ? 'updating' : 'creating'} user:`, err);
+    } catch (error) {
+      console.error('Error saving user:', error);
+      setError(error.response?.data?.detail || 'Failed to save user');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
-
-  return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <Button 
-          startIcon={<ArrowBackIcon />} 
-          onClick={() => navigate('/users')}
-          sx={{ mr: 2 }}
-        >
-          Back to Users
-        </Button>
-        <Typography variant="h4">
-          {isEditMode ? 'Edit User' : 'Add New User'}
-        </Typography>
+  
+  if (!isPlatformAdmin) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="400px">
+        <Typography>You don't have permission to access this page.</Typography>
       </Box>
-
+    );
+  }
+  
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="400px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+  
+  return (
+    <Box>
+      <Typography variant="h4" gutterBottom>
+        {isEditMode ? 'Edit User' : 'Create User'}
+      </Typography>
+      
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
       )}
-
+      
       {success && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          User {isEditMode ? 'updated' : 'created'} successfully!
+        <Alert severity="success" sx={{ mb: 3 }}>
+          {success}
         </Alert>
       )}
-
+      
       <Paper sx={{ p: 3 }}>
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
@@ -203,11 +219,12 @@ const UserForm = () => {
                 label="Username"
                 name="username"
                 value={formData.username}
-                onChange={handleInputChange}
+                onChange={handleChange}
                 required
-                disabled={loading}
+                disabled={isEditMode} // Username cannot be changed in edit mode
               />
             </Grid>
+            
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
@@ -215,93 +232,100 @@ const UserForm = () => {
                 name="email"
                 type="email"
                 value={formData.email}
-                onChange={handleInputChange}
+                onChange={handleChange}
                 required
-                disabled={loading}
               />
             </Grid>
+            
+            {!isEditMode && (
+              <>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Password"
+                    name="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required={!isEditMode}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Confirm Password"
+                    name="password2"
+                    type="password"
+                    value={formData.password2}
+                    onChange={handleChange}
+                    required={!isEditMode}
+                    error={formData.password !== formData.password2 && formData.password2 !== ''}
+                    helperText={formData.password !== formData.password2 && formData.password2 !== '' ? 'Passwords do not match' : ''}
+                  />
+                </Grid>
+              </>
+            )}
+            
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="First Name"
                 name="first_name"
                 value={formData.first_name}
-                onChange={handleInputChange}
+                onChange={handleChange}
                 required
-                disabled={loading}
               />
             </Grid>
+            
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Last Name"
                 name="last_name"
                 value={formData.last_name}
-                onChange={handleInputChange}
+                onChange={handleChange}
                 required
-                disabled={loading}
               />
             </Grid>
+            
             <Grid item xs={12}>
-              <FormControl fullWidth disabled={loading}>
+              <FormControl fullWidth required>
                 <InputLabel id="role-label">Role</InputLabel>
                 <Select
                   labelId="role-label"
-                  id="role"
                   name="role"
                   value={formData.role}
+                  onChange={handleChange}
                   label="Role"
-                  onChange={handleInputChange}
                 >
                   <MenuItem value="PLATFORM_ADMIN">Platform Admin</MenuItem>
                   <MenuItem value="SUPPORT_STAFF">Support Staff</MenuItem>
                   <MenuItem value="WAREHOUSE_ADMIN">Warehouse Admin</MenuItem>
                 </Select>
+                <FormHelperText>
+                  Platform Admin: Can manage all users and resources
+                </FormHelperText>
               </FormControl>
             </Grid>
             
             <Grid item xs={12}>
-              <Divider sx={{ my: 1 }}>
-                {isEditMode ? 'Change Password (optional)' : 'Password'}
-              </Divider>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                required={!isEditMode}
-                disabled={loading}
-                helperText={isEditMode ? "Leave blank to keep current password" : "Password must be at least 8 characters"}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Confirm Password"
-                name="password2"
-                type="password"
-                value={formData.password2}
-                onChange={handleInputChange}
-                required={!isEditMode || (isEditMode && formData.password)}
-                disabled={loading}
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  type="submit"
-                  disabled={loading}
-                  startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
+              <Box display="flex" justifyContent="flex-end" mt={2}>
+                <Button 
+                  variant="outlined" 
+                  onClick={() => navigate('/users')}
+                  sx={{ mr: 2 }}
+                  disabled={submitting}
                 >
-                  {loading ? 'Saving...' : 'Save User'}
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  variant="contained" 
+                  color="primary"
+                  disabled={submitting}
+                >
+                  {submitting ? <CircularProgress size={24} /> : isEditMode ? 'Update' : 'Create'}
                 </Button>
               </Box>
             </Grid>

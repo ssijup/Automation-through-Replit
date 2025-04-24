@@ -1,24 +1,18 @@
 import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { 
   AppBar, 
   Toolbar, 
   Typography, 
   IconButton, 
-  Box, 
-  Menu, 
-  MenuItem, 
-  Divider,
-  ListItemIcon,
-  Avatar
+  Avatar,
+  Menu,
+  MenuItem,
+  Button,
+  Box
 } from '@mui/material';
-import { 
-  Menu as MenuIcon,
-  AccountCircle, 
-  Logout, 
-  Settings 
-} from '@mui/icons-material';
+import { Menu as MenuIcon, ExitToApp as LogoutIcon } from '@mui/icons-material';
 import { logout } from '../store/actions';
 
 const Header = () => {
@@ -27,8 +21,29 @@ const Header = () => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = React.useState(null);
   
-  const getRoleDisplayName = (role) => {
-    switch (role) {
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+  
+  const handleLogout = () => {
+    handleMenuClose();
+    dispatch(logout());
+    navigate('/login');
+  };
+  
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    return `${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}`;
+  };
+  
+  const getUserRole = () => {
+    if (!user) return '';
+    
+    switch (user.role) {
       case 'PLATFORM_ADMIN':
         return 'Platform Admin';
       case 'SUPPORT_STAFF':
@@ -36,88 +51,59 @@ const Header = () => {
       case 'WAREHOUSE_ADMIN':
         return 'Warehouse Admin';
       default:
-        return role;
+        return '';
     }
   };
-
-  const handleMenu = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate('/login');
-  };
-
+  
   return (
-    <AppBar position="static">
+    <AppBar position="fixed" className="header">
       <Toolbar>
         <IconButton
-          size="large"
           edge="start"
           color="inherit"
           aria-label="menu"
-          sx={{ mr: 2 }}
+          sx={{ mr: 2, display: { sm: 'block', md: 'none' } }}
         >
           <MenuIcon />
         </IconButton>
+        
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           Warehouse Admin Panel
         </Typography>
         
         {user && (
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography variant="body2" sx={{ mr: 2 }}>
-              {user.first_name} {user.last_name} | {getRoleDisplayName(user.role)}
+          <Box display="flex" alignItems="center">
+            <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
+              {getUserRole()}
             </Typography>
-            <IconButton
-              size="large"
-              aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleMenu}
-              color="inherit"
+            
+            <Button 
+              color="inherit" 
+              onClick={handleMenuOpen}
+              startIcon={
+                <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
+                  {getUserInitials()}
+                </Avatar>
+              }
             >
-              <AccountCircle />
-            </IconButton>
+              {user.username}
+            </Button>
+            
             <Menu
-              id="menu-appbar"
               anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
               anchorOrigin={{
                 vertical: 'bottom',
                 horizontal: 'right',
               }}
-              keepMounted
               transformOrigin={{
                 vertical: 'top',
                 horizontal: 'right',
               }}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
             >
-              <MenuItem disabled>
-                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                  <Typography variant="subtitle2">{user.username}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {user.email}
-                  </Typography>
-                </Box>
-              </MenuItem>
-              <Divider />
-              <MenuItem onClick={handleClose}>
-                <ListItemIcon>
-                  <Settings fontSize="small" />
-                </ListItemIcon>
-                Profile Settings
-              </MenuItem>
               <MenuItem onClick={handleLogout}>
-                <ListItemIcon>
-                  <Logout fontSize="small" />
-                </ListItemIcon>
+                <LogoutIcon fontSize="small" sx={{ mr: 1 }} />
                 Logout
               </MenuItem>
             </Menu>

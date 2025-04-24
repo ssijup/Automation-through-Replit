@@ -20,18 +20,9 @@ class CurrentUserView(generics.RetrieveAPIView):
         return self.request.user
 
 
-class UserCreateView(generics.CreateAPIView):
+class UserListCreateView(generics.ListCreateAPIView):
     """
-    API endpoint for creating users (Platform Admin only)
-    """
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [IsPlatformAdmin]
-
-
-class UserListView(generics.ListAPIView):
-    """
-    API endpoint for listing users (Platform Admin only)
+    API endpoint for listing and creating users (Platform Admin only)
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer

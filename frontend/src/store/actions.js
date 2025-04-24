@@ -1,113 +1,168 @@
 import { 
   login as loginApi, 
-  refreshTokenApi,
-  getCurrentUser
+  refreshTokenApi, 
+  getCurrentUser,
+  getUsers,
+  getWarehouses,
+  getAnnouncements,
+  getRecentAnnouncements
 } from '../utils/api';
-import { 
-  setTokens, 
-  removeTokens, 
-  getTokens 
-} from '../utils/auth';
 
-// Action Types
+// Authentication action types
 export const AUTH_LOGIN_REQUEST = 'AUTH_LOGIN_REQUEST';
 export const AUTH_LOGIN_SUCCESS = 'AUTH_LOGIN_SUCCESS';
 export const AUTH_LOGIN_FAIL = 'AUTH_LOGIN_FAIL';
-
 export const AUTH_LOGOUT = 'AUTH_LOGOUT';
-
 export const AUTH_REFRESH_REQUEST = 'AUTH_REFRESH_REQUEST';
 export const AUTH_REFRESH_SUCCESS = 'AUTH_REFRESH_SUCCESS';
 export const AUTH_REFRESH_FAIL = 'AUTH_REFRESH_FAIL';
-
 export const AUTH_USER_LOADED = 'AUTH_USER_LOADED';
 
-// Action Creators
-
-// Login user
+// Authentication actions
 export const login = (username, password, onSuccess) => async dispatch => {
   try {
     dispatch({ type: AUTH_LOGIN_REQUEST });
-
-    // Login and get tokens
-    const { access, refresh } = await loginApi(username, password);
     
-    // Save tokens
-    setTokens(access, refresh);
+    const data = await loginApi(username, password);
     
-    // Get user info
-    const user = await getCurrentUser();
+    // Store tokens in localStorage
+    localStorage.setItem('access_token', data.access);
+    localStorage.setItem('refresh_token', data.refresh);
     
-    dispatch({ 
-      type: AUTH_LOGIN_SUCCESS,
-      payload: user
-    });
+    dispatch({ type: AUTH_LOGIN_SUCCESS });
+    
+    // Load user info
+    dispatch(loadUser());
     
     if (onSuccess) onSuccess();
   } catch (error) {
     dispatch({
       type: AUTH_LOGIN_FAIL,
-      payload: error.response && error.response.data.detail
-        ? error.response.data.detail
-        : 'Invalid username or password'
+      payload: error.response?.data?.detail || 'Authentication failed. Please check your credentials.'
     });
   }
 };
 
-// Logout user
 export const logout = () => dispatch => {
-  removeTokens();
+  // Remove tokens from localStorage
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  
   dispatch({ type: AUTH_LOGOUT });
 };
 
-// Refresh token
 export const refreshToken = () => async dispatch => {
+  const refreshToken = localStorage.getItem('refresh_token');
+  
+  if (!refreshToken) {
+    dispatch(logout());
+    return;
+  }
+  
   try {
     dispatch({ type: AUTH_REFRESH_REQUEST });
     
-    const { refreshToken } = getTokens();
+    const data = await refreshTokenApi(refreshToken);
     
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
-    }
+    localStorage.setItem('access_token', data.access);
     
-    const { access } = await refreshTokenApi(refreshToken);
+    dispatch({ type: AUTH_REFRESH_SUCCESS });
     
-    // Only update the access token, keep the refresh token
-    localStorage.setItem('access_token', access);
-    
-    // Try to get user data
-    try {
-      const user = await getCurrentUser();
-      dispatch({ 
-        type: AUTH_REFRESH_SUCCESS,
-        payload: user
-      });
-    } catch (error) {
-      // If we can't get user data, at least we refreshed the token
-      dispatch({ type: AUTH_REFRESH_SUCCESS });
-    }
-    
-    return Promise.resolve();
+    // Load user info
+    dispatch(loadUser());
   } catch (error) {
-    // If refresh fails, logout
-    removeTokens();
-    dispatch({ type: AUTH_REFRESH_FAIL });
-    return Promise.reject(error);
+    dispatch({
+      type: AUTH_REFRESH_FAIL,
+      payload: 'Session expired. Please login again.'
+    });
+    
+    dispatch(logout());
   }
 };
 
-// Load user info
 export const loadUser = () => async dispatch => {
   try {
-    const user = await getCurrentUser();
-    
+    const userData = await getCurrentUser();
     dispatch({
       type: AUTH_USER_LOADED,
-      payload: user
+      payload: userData
     });
   } catch (error) {
-    // If we can't get user info, try to refresh the token
-    dispatch(refreshToken());
+    console.error('Error loading user:', error);
+  }
+};
+
+// Warehouse action creators
+export const fetchWarehouses = (page = 1) => async dispatch => {
+  try {
+    dispatch({ type: 'WAREHOUSE_LIST_REQUEST' });
+    
+    const warehouseData = await getWarehouses(page);
+    
+    dispatch({
+      type: 'WAREHOUSE_LIST_SUCCESS',
+      payload: warehouseData
+    });
+  } catch (error) {
+    dispatch({
+      type: 'WAREHOUSE_LIST_FAIL',
+      payload: error.response?.data?.detail || 'Failed to fetch warehouses'
+    });
+  }
+};
+
+// Announcement action creators
+export const fetchAnnouncements = (page = 1) => async dispatch => {
+  try {
+    dispatch({ type: 'ANNOUNCEMENT_LIST_REQUEST' });
+    
+    const announcementData = await getAnnouncements(page);
+    
+    dispatch({
+      type: 'ANNOUNCEMENT_LIST_SUCCESS',
+      payload: announcementData
+    });
+  } catch (error) {
+    dispatch({
+      type: 'ANNOUNCEMENT_LIST_FAIL',
+      payload: error.response?.data?.detail || 'Failed to fetch announcements'
+    });
+  }
+};
+
+export const fetchRecentAnnouncements = (limit = 5) => async dispatch => {
+  try {
+    dispatch({ type: 'ANNOUNCEMENT_LIST_REQUEST' });
+    
+    const announcementData = await getRecentAnnouncements(limit);
+    
+    dispatch({
+      type: 'ANNOUNCEMENT_RECENT_SUCCESS',
+      payload: announcementData
+    });
+  } catch (error) {
+    dispatch({
+      type: 'ANNOUNCEMENT_LIST_FAIL',
+      payload: error.response?.data?.detail || 'Failed to fetch recent announcements'
+    });
+  }
+};
+
+// User action creators
+export const fetchUsers = (page = 1) => async dispatch => {
+  try {
+    dispatch({ type: 'USER_LIST_REQUEST' });
+    
+    const userData = await getUsers(page);
+    
+    dispatch({
+      type: 'USER_LIST_SUCCESS',
+      payload: userData
+    });
+  } catch (error) {
+    dispatch({
+      type: 'USER_LIST_FAIL',
+      payload: error.response?.data?.detail || 'Failed to fetch users'
+    });
   }
 };

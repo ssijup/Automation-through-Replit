@@ -5,8 +5,7 @@ from rest_framework_simplejwt.views import (
 )
 from .views import (
     CurrentUserView,
-    UserCreateView,
-    UserListView,
+    UserListCreateView,
     UserDetailView,
     WarehouseListCreateView,
     WarehouseDetailView,
@@ -20,9 +19,8 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
     # User endpoints
-    path('users/current/', CurrentUserView.as_view(), name='current_user'),
-    path('users/create/', UserCreateView.as_view(), name='user_create'),
-    path('users/', UserListView.as_view(), name='user_list'),
+    path('current-user/', CurrentUserView.as_view(), name='current_user'),
+    path('users/', UserListCreateView.as_view(), name='user_list_create'),
     path('users/<int:pk>/', UserDetailView.as_view(), name='user_detail'),
     
     # Warehouse endpoints

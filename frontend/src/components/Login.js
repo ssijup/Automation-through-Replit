@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { 
   Container, 
   Box, 
@@ -8,8 +8,8 @@ import {
   Button, 
   Typography, 
   Paper,
-  Alert,
-  CircularProgress
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import { login } from '../store/actions';
 
@@ -50,7 +50,7 @@ const Login = () => {
           </Typography>
           
           {error && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+            <Alert severity="error" sx={{ width: '100%', mb: 3 }}>
               {error}
             </Alert>
           )}
@@ -89,6 +89,9 @@ const Login = () => {
             >
               {loading ? <CircularProgress size={24} /> : 'Sign In'}
             </Button>
+            <Typography variant="body2" color="text.secondary" align="center">
+              (Demo credentials: admin/admin123, support/support123, warehouse/warehouse123)
+            </Typography>
           </Box>
         </Paper>
       </Box>

@@ -1,15 +1,11 @@
-import { createStore, combineReducers, applyMiddleware } from 'redux';
+import { createStore, applyMiddleware } from 'redux';
 import thunk from 'redux-thunk';
-import { composeWithDevTools } from 'redux-devtools-extension';
-import reducers from './reducers';
+import rootReducer from './reducers';
 
-const middleware = [thunk];
-
+// Create store with thunk middleware for async actions
 const store = createStore(
-  combineReducers({
-    auth: reducers.authReducer,
-  }),
-  composeWithDevTools(applyMiddleware(...middleware))
+  rootReducer,
+  applyMiddleware(thunk)
 );
 
 export default store;
