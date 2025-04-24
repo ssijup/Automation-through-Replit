@@ -1,3 +1,4 @@
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
@@ -9,16 +10,16 @@ class User(AbstractUser):
     Roles: PLATFORM_ADMIN, SUPPORT_STAFF, WAREHOUSE_ADMIN
     """
     class Role(models.TextChoices):
-        PLATFORM_ADMIN = 'PLATFORM_ADMIN', _('Platform Admin')
-        SUPPORT_STAFF = 'SUPPORT_STAFF', _('Support Staff')
-        WAREHOUSE_ADMIN = 'WAREHOUSE_ADMIN', _('Warehouse Admin')
+        PLATFORM_ADMIN = "PLATFORM_ADMIN", _("Platform Admin")
+        SUPPORT_STAFF = "SUPPORT_STAFF", _("Support Staff")
+        WAREHOUSE_ADMIN = "WAREHOUSE_ADMIN", _("Warehouse Admin")
     
     role = models.CharField(
         max_length=20,
         choices=Role.choices,
         default=Role.WAREHOUSE_ADMIN,
     )
-
+    
     def is_platform_admin(self):
         return self.role == self.Role.PLATFORM_ADMIN
     
@@ -42,9 +43,9 @@ class Warehouse(models.Model):
         User, 
         on_delete=models.SET_NULL, 
         null=True, 
-        related_name='created_warehouses'
+        related_name="created_warehouses"
     )
-
+    
     def __str__(self):
         return f"Warehouse in {self.city}"
 
@@ -61,9 +62,10 @@ class Announcement(models.Model):
         User, 
         on_delete=models.SET_NULL, 
         null=True, 
-        related_name='created_announcements'
+        related_name="created_announcements"
     )
     is_active = models.BooleanField(default=True)
-
+    
     def __str__(self):
         return self.title
+
